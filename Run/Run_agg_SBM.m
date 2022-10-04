@@ -1,14 +1,15 @@
 clc, clear, close all, clear global
-tic
-folder = ['f09','\autoever_0531'];
+addpath('..\Func') % add 'Func' folder path
+addpath('..\Input') % add 'Input' folder path
 
-pipeline % csv read
-time_reduction % 48 hours => 12 slot
-[UC, Bid, VPP, ESS, EV, SoC, exitflag] = CoSchedule(ESS, EV, ev, market, passive, Bid); % MILP scheduling algorithm
+[market, ev, ess] = Func_pipeline(); % csv read
+% time_reduction % 48 hours => 12 slot
+[x, exitflag] = SBM_bid_model(market, ev, ess); % MILP scheduling algorithm
+y = Func_arranger(x,market,ev,ess);
 % "UC": 성능 검증을 위한 알고리즘 결과
 % "Bid": 알고리즘이 도출한 최종 output
 % "VPP": TE 출력의 총합
-toc
+
 %% excel format
 netload = passive.D - passive.PV;
 mat_EV = zeros(T*max(EV.class),5);
