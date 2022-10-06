@@ -25,20 +25,20 @@ intcon = 1:lenN;
 % UC-ev
 A_uc_ev = zeros(N.dur_ev,lenN);
 temp.d = 0; temp.v = N.p_ev + N.p_ess;
-for i = 1:N.ev
-    A_uc_ev(temp.d+1 : temp.d+ev.duration(i), temp.v+1 : temp.v+ev.duration(i)*(N.market+N.sc)) = repmat(eye(ev.duration(i)),1,(N.market+N.sc));
-    temp.d = temp.d + ev.duration(i);
-    temp.v = temp.v + ev.duration(i)*(N.market+N.sc);
+for vdx = 1:N.ev
+    A_uc_ev(temp.d+1 : temp.d+ev.duration(vdx), temp.v+1 : temp.v+ev.duration(vdx)*(N.market+N.sc)) = repmat(eye(ev.duration(vdx)),1,(N.market+N.sc));
+    temp.d = temp.d + ev.duration(vdx);
+    temp.v = temp.v + ev.duration(vdx)*(N.market+N.sc);
 end
 B_uc_ev = ones(N.dur_ev,1);
 
 % UC-ess
 A_uc_ess = zeros(N.dur_ess,lenN);
 temp.d = 0; temp.v = N.p_ev + N.p_ess + N.uc_ev;
-for i = 1:N.ess
-    A_uc_ess(temp.d+1 : temp.d+ess.duration(i), temp.v+1 : temp.v+ess.duration(i)*(N.market+N.sc)) = repmat(eye(ess.duration(i)),1,(N.market+N.sc));
-    temp.d = temp.d + ess.duration(i);
-    temp.v = temp.v + ess.duration(i)*(N.market+N.sc);
+for vdx = 1:N.ess
+    A_uc_ess(temp.d+1 : temp.d+ess.duration(vdx), temp.v+1 : temp.v+ess.duration(vdx)*(N.market+N.sc)) = repmat(eye(ess.duration(vdx)),1,(N.market+N.sc));
+    temp.d = temp.d + ess.duration(vdx);
+    temp.v = temp.v + ess.duration(vdx)*(N.market+N.sc);
 end
 B_uc_ess = ones(N.dur_ess,1);
 
@@ -49,10 +49,10 @@ temp.v = 0;
 A_p_uc_ev(1 : N.p_ev, temp.v+1:temp.v+N.p_ev) = eye(N.p_ev);
 temp.d = 0;
 temp.v = N.p_ev + N.p_ess;
-for i = 1:N.ev
-    A_p_uc_ev(temp.d+1 : temp.d+ev.duration(i)*(N.market+N.sc), temp.v+1:temp.v+ev.duration(i)*(N.market+N.sc)) = -eye(ev.duration(i)*(N.market+N.sc))*ev.pcs(i);
-    temp.d = temp.d + ev.duration(i)*(N.market+N.sc);
-    temp.v = temp.v + ev.duration(i)*(N.market+N.sc);
+for vdx = 1:N.ev
+    A_p_uc_ev(temp.d+1 : temp.d+ev.duration(vdx)*(N.market+N.sc), temp.v+1:temp.v+ev.duration(vdx)*(N.market+N.sc)) = -eye(ev.duration(vdx)*(N.market+N.sc))*ev.pcs(vdx);
+    temp.d = temp.d + ev.duration(vdx)*(N.market+N.sc);
+    temp.v = temp.v + ev.duration(vdx)*(N.market+N.sc);
 end
 B_p_uc_ev = zeros(N.p_ev,1);
 
@@ -62,10 +62,10 @@ temp.v = N.p_ev;
 A_p_uc_ess(1 : N.p_ess, temp.v+1:temp.v+N.p_ess) = eye(N.p_ess);
 temp.d = 0;
 temp.v = N.p_ess + N.p_ess + N.uc_ev;
-for i = 1:N.ess
-    A_p_uc_ess(temp.d+1 : temp.d+ess.duration(i)*(N.market+N.sc), temp.v+1:temp.v+ess.duration(i)*(N.market+N.sc)) = -eye(ess.duration(i)*(N.market+N.sc))*ess.pcs(i);
-    temp.d = temp.d + ess.duration(i)*(N.market+N.sc);
-    temp.v = temp.v + ess.duration(i)*(N.market+N.sc);
+for vdx = 1:N.ess
+    A_p_uc_ess(temp.d+1 : temp.d+ess.duration(vdx)*(N.market+N.sc), temp.v+1:temp.v+ess.duration(vdx)*(N.market+N.sc)) = -eye(ess.duration(vdx)*(N.market+N.sc))*ess.pcs(vdx);
+    temp.d = temp.d + ess.duration(vdx)*(N.market+N.sc);
+    temp.v = temp.v + ess.duration(vdx)*(N.market+N.sc);
 end
 B_p_uc_ess = zeros(N.p_ess,1);
 
@@ -76,13 +76,13 @@ A_soc_ev_ub = zeros(N.dur_ev,lenN);
 B_soc_ev_ub = repelem((ev.maxSOC-ev.initialSOC).*ev.capacity,ev.duration,1);
 B_soc_ev_lb = repelem((ev.initialSOC-ev.minSOC).*ev.capacity,ev.duration,1);
 temp.d = 0; temp.v = 0;
-for i = 1:N.ev
-    dur = ev.in(i):ev.out(i);
-    mat = tril(ones(ev.duration(i)));
+for vdx = 1:N.ev
+    dur = ev.in(vdx):ev.out(vdx);
+    mat = tril(ones(ev.duration(vdx)));
     dev = [mat.*market.S_FCR(dur) mat.*market.S_aFRR_p(dur) mat.*market.S_aFRR_n(dur) mat];
-    A_soc_ev_ub(temp.d+1 : temp.d+ev.duration(i), temp.v+1 : temp.v+ev.duration(i)*(N.market+N.sc))  = dev;
-    temp.d = temp.d + ev.duration(i);
-    temp.v = temp.v + ev.duration(i)*(N.market+N.sc);
+    A_soc_ev_ub(temp.d+1 : temp.d+ev.duration(vdx), temp.v+1 : temp.v+ev.duration(vdx)*(N.market+N.sc))  = dev;
+    temp.d = temp.d + ev.duration(vdx);
+    temp.v = temp.v + ev.duration(vdx)*(N.market+N.sc);
 end
 A_soc_ev_lb = -A_soc_ev_ub;
 
@@ -91,13 +91,13 @@ A_soc_ess_ub = zeros(N.dur_ess,lenN);
 B_soc_ess_ub = repelem((ess.maxSOC-ess.initialSOC).*ess.capacity,ess.duration,1);
 B_soc_ess_lb = repelem((ess.initialSOC-ess.minSOC).*ess.capacity,ess.duration,1);
 temp.d = 0; temp.v = N.uc_ev;
-for i = 1:N.ess
+for vdx = 1:N.ess
     dur = 1:T;
-    mat = tril(ones(ess.duration(i)));
+    mat = tril(ones(ess.duration(vdx)));
     dev = [mat.*market.S_FCR(dur) mat.*market.S_aFRR_p(dur) mat.*market.S_aFRR_n(dur) mat];
-    A_soc_ess_ub(temp.d+1 : temp.d+ess.duration(i), temp.v+1 : temp.v+ess.duration(i)*(N.market+N.sc))  = dev;
-    temp.d = temp.d + ess.duration(i);
-    temp.v = temp.v + ess.duration(i)*(N.market+N.sc);
+    A_soc_ess_ub(temp.d+1 : temp.d+ess.duration(vdx), temp.v+1 : temp.v+ess.duration(vdx)*(N.market+N.sc))  = dev;
+    temp.d = temp.d + ess.duration(vdx);
+    temp.v = temp.v + ess.duration(vdx)*(N.market+N.sc);
 end
 A_soc_ess_lb = -A_soc_ess_ub;
 
@@ -110,115 +110,176 @@ A_goalsoc_ess = A_soc_ess_lb(cumsum(ess.duration),:);
 B_goalsoc_ess = (ess.initialSOC - ess.goalSOC).*ess.capacity;
 
 %%% CBL
-% A_startup_ESS = [];
-% A_shutdown_ESS = [];
-% for i = 1:ESS.num
-%     temp = zeros((M-SC)*(T-1),N);
-%     temp2 = zeros((M-SC)*(T-1),N);
-%     for m = 1:M-SC
-%         temp((m-1)*(T-1)+1:(m-1)*(T-1)+T-1, (i-1)*T*M+(m-1)*T+1:(i-1)*T*M+(m-1)*T+T-1) = eye(T-1);
-%         temp2((m-1)*(T-1)+1:(m-1)*(T-1)+T-1,(i-1)*T*M+(m-1)*T+2:(i-1)*T*M+(m-1)*T+T) = -eye(T-1);
-%     end
-%     temp = temp+temp2;
-%     % shut-down
-%     temp_a = temp;
-%     temp_a(:,N_cbl+(i-1)*(T-1)*(M-SC)+1:N_cbl+(i-1)*(T-1)*(M-SC)+(M-SC)*(T-1)) = -eye((T-1)*(M-SC));
-%     A_startup_ESS = [A_startup_ESS; temp_a];
-%     % start-up
-%     temp_b = -temp;
-%     temp_b(:,N_cbl+cbl+(i-1)*(T-1)*(M-SC)+1:N_cbl+cbl+(i-1)*(T-1)*(M-SC)+(M-SC)*(T-1)) = -eye((T-1)*(M-SC));
-%     A_shutdown_ESS = [A_shutdown_ESS; temp_b];
-% end
-% B_startup_ESS = zeros(size(A_startup_ESS,1),1); B_shutdown_ESS = zeros(size(A_shutdown_ESS,1),1);
-% 
-% % inequality(CBL 제약) ESS
-% A_CBL_ESS = [];
-% for i = 1:ESS.num
-%     temp = zeros((M-SC)*(T-1),N);
-%     for m = 1:M-SC
-%         temp((m-1)*(T-1)+1 : m*(T-1), N_cbl+(i-1)*(M-SC)*(T-1)+(m-1)*(T-1)+1 : N_cbl+(i-1)*(M-SC)*(T-1)+m*(T-1)) = eye(T-1);
-%         for n = 1:M-SC
-%             if n ~= m
-%                 temp((m-1)*(T-1)+1 : m*(T-1), N_cbl+cbl+(i-1)*(M-SC)*(T-1)+(n-1)*(T-1)+1 : N_cbl+cbl+(i-1)*(M-SC)*(T-1)+n*(T-1)) = eye(T-1);
-%             end
-%         end
-%     end
-%     A_CBL_ESS = [A_CBL_ESS; temp];
-% end
-% B_CBL_ESS = ones(size(A_CBL_ESS,1),1);
-% 
-% % equality(slack 지정) EV
-% A_startup_EV = [];
-% A_shutdown_EV = [];
-% dur_x = 0; dur_y = 0;
-% for i = 1:EV.num
-%     if EV.dur(i) > 1
-%         temp = zeros((M-SC)*(EV.dur(i)-1),N);
-%         temp2 = zeros((M-SC)*(EV.dur(i)-1),N);
-%         for m = 1:M-SC
-%             % start-up
-%             temp((m-1)*(EV.dur(i)-1)+1:(m-1)*(EV.dur(i)-1)+EV.dur(i)-1, ...
-%                 sumESS+dur_x+(m-1)*EV.dur(i)+1:sumESS+dur_x+(m-1)*EV.dur(i)+EV.dur(i)-1) = eye(EV.dur(i)-1);
-%             % shut-down
-%             temp2((m-1)*(EV.dur(i)-1)+1:(m-1)*(EV.dur(i)-1)+EV.dur(i)-1,...
-%                 sumESS+dur_x+(m-1)*EV.dur(i)+2:sumESS+dur_x+(m-1)*EV.dur(i)+EV.dur(i)) = -eye(EV.dur(i)-1);
-%         end
-%         temp = temp+temp2;
-%         % start-up
-%         temp_a = temp;
-%         temp_a(:,N_cbl+sum(ESS.num*(T-1)*(M-SC))+dur_y+1:N_cbl+sum(ESS.num*(T-1)*(M-SC))+dur_y+(M-SC)*(EV.dur(i)-1)) = -eye((EV.dur(i)-1)*(M-SC)); % equality slack
-%         A_startup_EV = [A_startup_EV; temp_a];
-%         % shut-down
-%         temp_b = -temp;
-%         temp_b(:,N_cbl+cbl+sum(ESS.num*(T-1)*(M-SC))+dur_y+1:N_cbl+cbl+sum(ESS.num*(T-1)*(M-SC))+dur_y+(M-SC)*(EV.dur(i)-1)) = -eye((EV.dur(i)-1)*(M-SC)); % equality slack
-%         A_shutdown_EV = [A_shutdown_EV; temp_b];
-% 
-%         dur_y = dur_y + (EV.dur(i)-1)*(M-SC);
-%     end
-%     dur_x = dur_x + EV.dur(i)*M;
-% end
-% B_startup_EV = zeros(size(A_startup_EV,1),1); B_shutdown_EV = zeros(size(A_shutdown_EV,1),1);
-% 
-% % inequality(CBL 제약) EV
-% A_CBL_EV = []; dur = 0;
-% for i = 1:EV.num
-%     if EV.dur(i) > 1
-%         temp = zeros((M-SC)*(EV.dur(i)-1),N);
-%         for m = 1:M-SC
-%             temp((m-1)*(EV.dur(i)-1)+1:m*(EV.dur(i)-1),...
-%                 N_cbl+sum(ESS.num*(T-1)*(M-SC))+dur+(m-1)*(EV.dur(i)-1)+1 : N_cbl+sum(ESS.num*(T-1)*(M-SC))+dur+m*(EV.dur(i)-1)) = eye(EV.dur(i)-1);
-%             for n = 1:M-SC
-%                 if n ~= m
-%                     temp((m-1)*(EV.dur(i)-1)+1 : m*(EV.dur(i)-1),  N_cbl+cbl+sum(ESS.num*(T-1)*(M-SC))+dur+(n-1)*(EV.dur(i)-1)+1 ...
-%                         : N_cbl+cbl+sum(ESS.num*(T-1)*(M-SC))+dur+n*(EV.dur(i)-1)) = eye(EV.dur(i)-1);
-%                 end
-%             end
-%         end
-%         A_CBL_EV = [A_CBL_EV; temp];
-%         dur = dur + (EV.dur(i)-1)*(M-SC);
-%     end
-% end
-% B_CBL_EV = ones(size(A_CBL_EV,1),1);
+% def start-up, shut-down - ev
+cbl_slack_ev = zeros(N.dur_ev - N.ev, lenN);
+temp.d1 = 0; temp.d2 = N.p_ev + N.p_ess;
+for vdx = 1:N.ev
+    cbl_slack_ev(temp.d1+1: temp.d1+ev.duration(vdx)-1,temp.d2+1:temp.d2+ev.duration(vdx)*4) = repmat(eye(ev.duration(vdx)-1,ev.duration(vdx)) - [zeros(ev.duration(vdx)-1,1) eye(ev.duration(vdx)-1)],1,4);
+    temp.d1 = temp.d1 + ev.duration(vdx) - 1;
+    temp.d2 = temp.d2 + ev.duration(vdx)*4;
+end
+
+% def start-up, shut-down - ess
+cbl_slack_ess = zeros(N.dur_ess - N.ess, lenN);
+temp.d1 = 0; temp.d2 = N.p_ess + N.p_ess;
+for vdx = 1:N.ess
+    cbl_slack_ess(temp.d1+1: temp.d1+ess.duration(vdx)-1,temp.d2+1:temp.d2+ess.duration(vdx)*4) = repmat(eye(ess.duration(vdx)-1,ess.duration(vdx)) - [zeros(ess.duration(vdx)-1,1) eye(ess.duration(vdx)-1)],1,4);
+    temp.d1 = temp.d1 + ess.duration(vdx) - 1;
+    temp.d2 = temp.d2 + ess.duration(vdx)*4;
+end
+
+% cbl-ev
+A_cbl_ev = zeros((N.dur_ev - N.ev)*16, lenN);
+B_cbl_ev = ones((N.dur_ev - N.ev)*16, 1);
+for R = 1:4    
+    MAT = zeros((N.dur_ev - N.ev)*4, lenN);    
+    notM = 1:4;
+    notM = notM(notM~=R);
+    for r = 1:3        
+        temp.d1 = 0; temp.d2 = N.p_ev + N.p_ess;
+        mat = zeros(N.dur_ev - N.ev, lenN);
+        for vdx = 1:N.ev
+            temp.r = ev.duration(vdx) * (R-1); % start-up
+            mat(temp.d1+1: temp.d1+ev.duration(vdx)-1, temp.d2+temp.r+1 : temp.d2+temp.r+ev.duration(vdx)) ...
+                = -cbl_slack_ev(temp.d1+1: temp.d1+ev.duration(vdx)-1, temp.d2+temp.r+1 : temp.d2+temp.r+ev.duration(vdx));
+            temp.r = ev.duration(vdx) * (notM(r)-1); % shut-down
+            mat(temp.d1+1: temp.d1+ev.duration(vdx)-1, temp.d2+temp.r+1 : temp.d2+temp.r+ev.duration(vdx)) ...
+                = cbl_slack_ev(temp.d1+1: temp.d1+ev.duration(vdx)-1, temp.d2+temp.r+1 : temp.d2+temp.r+ev.duration(vdx));
+            temp.d1 = temp.d1 + ev.duration(vdx) - 1;
+            temp.d2 = temp.d2 + ev.duration(vdx)*4;
+        end
+        MAT((r-1)*(N.dur_ev - N.ev)+1:r*(N.dur_ev - N.ev), :) = mat;
+    end
+
+    A_cbl_ev((R-1)*(N.dur_ev - N.ev)*4+1:R*(N.dur_ev - N.ev)*4, :) = MAT;
+end
+
+% cbl-ess
+A_cbl_ess = zeros((N.dur_ess - N.ess)*16, lenN);
+B_cbl_ess = ones((N.dur_ess - N.ess)*16, 1);
+for R = 1:4    
+    MAT = zeros((N.dur_ess - N.ess)*4, lenN);    
+    notM = 1:4;
+    notM = notM(notM~=R);
+    for r = 1:3        
+        temp.d1 = 0; temp.d2 = N.p_ess + N.p_ess;
+        mat = zeros(N.dur_ess - N.ess, lenN);
+        for vdx = 1:N.ess
+            temp.r = ess.duration(vdx) * (R-1); % start-up
+            mat(temp.d1+1: temp.d1+ess.duration(vdx)-1, temp.d2+temp.r+1 : temp.d2+temp.r+ess.duration(vdx)) ...
+                = -cbl_slack_ess(temp.d1+1: temp.d1+ess.duration(vdx)-1, temp.d2+temp.r+1 : temp.d2+temp.r+ess.duration(vdx));
+            temp.r = ess.duration(vdx) * (notM(r)-1); % shut-down
+            mat(temp.d1+1: temp.d1+ess.duration(vdx)-1, temp.d2+temp.r+1 : temp.d2+temp.r+ess.duration(vdx)) ...
+                = cbl_slack_ess(temp.d1+1: temp.d1+ess.duration(vdx)-1, temp.d2+temp.r+1 : temp.d2+temp.r+ess.duration(vdx));
+            temp.d1 = temp.d1 + ess.duration(vdx) - 1;
+            temp.d2 = temp.d2 + ess.duration(vdx)*4;
+        end
+        MAT((r-1)*(N.dur_ess - N.ess)+1:r*(N.dur_ess - N.ess), :) = mat;
+    end
+
+    A_cbl_ess((R-1)*(N.dur_ess - N.ess)*4+1:R*(N.dur_ess - N.ess)*4, :) = MAT;
+end
 
 
 %%% 4 hour bidding slot
+% def hourly participation
+Pev{24,N.market*N.ev} = [];
+cumdur = [0; cumsum(ev.duration)];
+for vdx = 1:N.ev
+    in = ev.in(vdx);
+    out = ev.out(vdx);
+    for t = in:out
+        temp.m = 0;
+        for m = 1:3 % FCR/aFRRp/aFRRn
+            mat = zeros(1,lenN);
+            mat(cumdur(vdx)*4+t-in+1+temp.m) = 1;
+            Pev{t,(vdx-1)*3+m} = mat;
+            temp.m = temp.m + ev.duration(vdx);
+        end
+    end
+end
+
+% plug-map
+plug_map = zeros(24,1);
+for vdx = 1:N.ev
+    plug_map(ev.in(vdx):ev.out(vdx)) = plug_map(ev.in(vdx):ev.out(vdx)) + 1;
+end
+ava_market = zeros(6,1);
+for t = 1:6
+    if sum(plug_map((t-1)*4+1:t*4) == 0) > 0
+        continue;
+    end
+    ava_market(t) = 1;
+end
+
+% 4hour bid-ev
+Aeq_4hour_bid_ev = [];
+bid_FCR_ev = [];
+bid_aFRRp_ev = [];
+bid_aFRRn_ev = [];
+for t = 1 : 24/4
+    in = (t-1)*4 + 1 - min(ev.in) + 1;
+    if ava_market(t) == 0
+        continue;
+    end
+    mat = zeros(N.market*4,lenN);
+    for m = 1:N.market
+        for vdx = 1:N.ev
+            for tdx = 1:4
+                if isempty(Pev{(t-1)*4+tdx,(vdx-1)*3+m}) == 1
+                    continue
+                end
+                mat(tdx,:) = mat(tdx,:) + Pev{(t-1)*4+tdx,(vdx-1)*3+m};
+            end
+        end
+    end
+    Aeq_4hour_bid_ev = [Aeq_4hour_bid_ev; mat(1,:) - mat(2,:); mat(2,:) - mat(3,:); mat(3,:) - mat(4,:)];
+    bid_FCR_ev = [bid_FCR_ev; [(t-1)*4+1:t*4]' mat(1:4,:)];
+    bid_aFRRp_ev = [bid_aFRRp_ev; [(t-1)*4+1:t*4]' mat(5:8,:)];
+    bid_aFRRn_ev = [bid_aFRRn_ev; [(t-1)*4+1:t*4]' mat(9:12,:)];
+end
+Beq_4hour_bid_ev = zeros(height(Aeq_4hour_bid_ev),1);
+
+% temp.m = 0;
+% for m = 1:N.market    
+%     mat = zeros(24/4,lenN);
+%     for t = 1:24/4
+%         
+%         idx = find(ev.in <= 4*(t-1)+1);
+%         idx_check = find(ev.out(idx) > 4*(t-1)+1);
+%         if isempty(idx_check)
+%             continue;
+%         else
+%             idx = idx(find(ev.out(idx) > 4*(t-1)+1));
+%         end
+%         
+%         for i = 1:length(idx)
+%             vdx = idx(i);
+%             mat(i,temp.d)
+%         end
+%     
+%     end
+%     temp.m = temp.m + 
+% end
+
 
 %%% Back-up resource #######################################################################################
+% ESS = back-up resource??
 
 
 %%% def matrix A,B,Aeq,Beq
-constA_VPP = [];
+constA_VPP = [A_cbl_ev; A_cbl_ess];
 constA_EV = [A_uc_ev; A_p_uc_ev; A_soc_ev_ub; A_soc_ev_lb; A_goalsoc_ev];
 constA_ESS = [A_uc_ess; A_p_uc_ess; A_soc_ess_ub; A_soc_ess_lb; A_goalsoc_ess];
 
 
-constB_VPP = [];
+constB_VPP = [B_cbl_ev; B_cbl_ess];
 constB_EV = [B_uc_ev; B_p_uc_ev; B_soc_ev_ub; B_soc_ev_lb; B_goalsoc_ev];
 constB_ESS = [B_uc_ess; B_p_uc_ess; B_soc_ess_ub; B_soc_ess_lb; B_goalsoc_ess];
 
 A = [constA_VPP; constA_ESS; constA_EV]; 
 B = [constB_VPP; constB_ESS; constB_EV];
-Aeq=[]; Beq=[];
+Aeq=[Aeq_4hour_bid_ev]; Beq=[Beq_4hour_bid_ev];
 
 
 %% Optimization - objective functions
@@ -308,6 +369,6 @@ f = zeros(lenN,1); % f: 목적함수
 %% Solver: Mixed-integer Linear Programming
 options = optimoptions('intlinprog','Display','off');
 [x,fval,exitflag,output] = intlinprog(f,intcon,A,B,Aeq,Beq,lb,ub,[],options);
-
+save('Bid.mat','bid_FCR_ev','bid_aFRRp_ev','bid_aFRRn_ev');
 
 end

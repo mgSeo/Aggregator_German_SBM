@@ -1,4 +1,4 @@
-function u = Func_arranger(x,market,ev,ess)
+function [SoC, R, Bid] = Func_arranger(x,market,ev,ess)
 %% parameters:
 T = 24;
 N.market = 3;
@@ -56,79 +56,92 @@ for i = 1:N.ess
     soe(1:ess.duration(i)) = [];
 end
 
+%% Bid
+load('Bid.mat')
+% result Bid
+Market_bid = {'FCR','aFRRp','aFRRn'};
+FCR = bid_FCR_ev(:,2:end)*x;
+aFRRp = bid_aFRRp_ev(:,2:end)*x;;
+aFRRn = bid_aFRRn_ev(:,2:end)*x;;
+Bid = table(FCR,aFRRp,aFRRn);
+
+
+
+%% UC-P
 R = table();
 % power
-ID = {'FCR_ev_id_', 'aFRRp_ev_id_', 'aFRRn_ev_id_', 'sc_ev_id_'};
-temp.d = 0; temp.r = 0;
-for r = 1:N.market + N.sc
-    for i = 1:N.ev
+Market = {'FCR_ev_id_', 'aFRRp_ev_id_', 'aFRRn_ev_id_', 'sc_ev_id_'};
+temp.i = 0;
+
+for i = 1:N.ev
+    temp.d = 0;
+    for r = 1:N.market + N.sc
         mat = zeros(24,1);
-        mat(ev.in(i):ev.out(i)) = x(temp.d+1:temp.d+ev.duration(i));
+        mat(ev.in(i):ev.out(i)) = x(temp.d+1 : temp.d+ev.duration(i));
         temp.d = temp.d + ev.duration(i);
 
-        id = [ID{r},num2str(ev.id(i))];
-        R(:,temp.r+i) = array2table(mat);
-        R.Properties.VariableNames{temp.r+i} = id;
+        id = [Market{r},num2str(ev.id(i))];
+        R(:,temp.i+r) = array2table(mat);
+        R.Properties.VariableNames{temp.i+r} = id;
     end
-    temp.r = temp.r + N.ev;
+    x(1:ev.duration(i)*4) = [];
+    temp.i = temp.i + 4;
 end
-x(1:N.p_ev) = [];
 
-ID = {'FCR_ess_id_', 'aFRRp_ess_id_', 'aFRRn_ess_id_', 'sc_ess_id_'};
-temp.d = 0;
-for r = 1:N.market + N.sc
-    for i = 1:N.ess
-        mat = x(temp.d+1:temp.d+ess.duration(i));
+Market = {'FCR_ess_id_', 'aFRRp_ess_id_', 'aFRRn_ess_id_', 'sc_ess_id_'};
+for i = 1:N.ess
+    temp.d = 0;
+    for r = 1:N.market + N.sc
+        mat = x(temp.d+1 : temp.d+ess.duration(i));
         temp.d = temp.d + ess.duration(i);
 
-        id = [ID{r},num2str(ess.id(i))];
-        R(:,temp.r+i) = array2table(mat);
-        R.Properties.VariableNames{temp.r+i} = id;
+        id = [Market{r},num2str(ess.id(i))];
+        R(:,temp.i+r) = array2table(mat);
+        R.Properties.VariableNames{temp.i+r} = id;
     end
-    temp.r = temp.r + N.ess;
+    x(1:ess.duration(i)*4) = [];
+    temp.i = temp.i + 4;
 end
-x(1:N.p_ess) = [];
+
 
 % uc
-ID = {'uc_FCR_ev_id_', 'uc_aFRRp_ev_id_', 'uc_aFRRn_ev_id_', 'uc_sc_ev_id_'};
-temp.d = 0;
-for r = 1:N.market + N.sc
-    for i = 1:N.ev
+Market = {'uc_FCR_ev_id_', 'uc_aFRRp_ev_id_', 'uc_aFRRn_ev_id_', 'uc_sc_ev_id_'};
+for i = 1:N.ev
+    temp.d = 0;
+    for r = 1:N.market + N.sc
         mat = zeros(24,1);
-        mat(ev.in(i):ev.out(i)) = x(temp.d+1:temp.d+ev.duration(i));
+        mat(ev.in(i):ev.out(i)) = x(temp.d+1 : temp.d+ev.duration(i));
         temp.d = temp.d + ev.duration(i);
 
-        id = [ID{r},num2str(ev.id(i))];
-        R(:,temp.r+i) = array2table(mat);
-        R.Properties.VariableNames{temp.r+i} = id;
+        id = [Market{r},num2str(ev.id(i))];
+        R(:,temp.i+r) = array2table(mat);
+        R.Properties.VariableNames{temp.i+r} = id;
     end
-    temp.r = temp.r + N.ev;
+    x(1:ev.duration(i)*4) = [];
+    temp.i = temp.i + 4;
 end
-x(1:N.uc_ev) = [];
 
-ID = {'uc_FCR_ess_id_', 'uc_aFRRp_ess_id_', 'uc_aFRRn_ess_id_', 'uc_sc_ess_id_'};
-temp.d = 0;
-for r = 1:N.market + N.sc
-    for i = 1:N.ess
-        mat = x(temp.d+1:temp.d+ess.duration(i));
+Market = {'uc_FCR_ess_id_', 'uc_aFRRp_ess_id_', 'uc_aFRRn_ess_id_', 'uc_sc_ess_id_'};
+for i = 1:N.ess
+    temp.d = 0;
+    for r = 1:N.market + N.sc
+        mat = x(temp.d+1 : temp.d+ess.duration(i));
         temp.d = temp.d + ess.duration(i);
-
-        id = [ID{r},num2str(ess.id(i))];
-        R(:,temp.r+i) = array2table(mat);
-        R.Properties.VariableNames{temp.r+i} = id;
+        id = [Market{r},num2str(ess.id(i))];
+        R(:,temp.i+r) = array2table(mat);
+        R.Properties.VariableNames{temp.i+r} = id;
     end
-    temp.r = temp.r + N.ess;
+    x(1:ess.duration(i)*4) = [];
+    temp.i = temp.i + 4;
 end
-x(1:N.uc_ess) = [];
 
 % reset sequence
-ID = {'FCR_ev_id_', 'aFRRp_ev_id_', 'aFRRn_ev_id_', 'sc_ev_id_', 'uc_FCR_ev_id_', 'uc_aFRRp_ev_id_', 'uc_aFRRn_ev_id_', 'uc_sc_ev_id_'};
+Market = {'FCR_ev_id_', 'aFRRp_ev_id_', 'aFRRn_ev_id_', 'sc_ev_id_', 'uc_FCR_ev_id_', 'uc_aFRRp_ev_id_', 'uc_aFRRn_ev_id_', 'uc_sc_ev_id_'};
 for i = 1:N.ev % table column sorting
     for n = 1:7
-        id_left = [ID{n},num2str(ev.id(i))];
-        id_right = [ID{n+1},num2str(ev.id(i))];
+        id_left = [Market{n},num2str(ev.id(i))];
+        id_right = [Market{n+1},num2str(ev.id(i))];
         R = movevars(R, id_right, 'after', id_left);
     end
 end
-
 end

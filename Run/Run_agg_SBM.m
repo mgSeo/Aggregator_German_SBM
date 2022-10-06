@@ -5,12 +5,12 @@ addpath('..\Input') % add 'Input' folder path
 [market, ev, ess] = Func_pipeline(); % csv read
 % time_reduction % 48 hours => 12 slot
 [x, exitflag] = SBM_bid_model(market, ev, ess); % MILP scheduling algorithm
-y = Func_arranger(x,market,ev,ess);
+[SoC, R, Bid] = Func_arranger(x,market,ev,ess);
 % "UC": 성능 검증을 위한 알고리즘 결과
 % "Bid": 알고리즘이 도출한 최종 output
 % "VPP": TE 출력의 총합
 
-%% excel format
+%% excel formatvdx
 netload = passive.D - passive.PV;
 mat_EV = zeros(T*max(EV.class),5);
 for i = 1:max(EV.class)
