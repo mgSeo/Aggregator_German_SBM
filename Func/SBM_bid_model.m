@@ -234,34 +234,11 @@ for t = 1 : 24/4
         end
     end
     Aeq_4hour_bid_ev = [Aeq_4hour_bid_ev; mat(1,:) - mat(2,:); mat(2,:) - mat(3,:); mat(3,:) - mat(4,:)];
-    bid_FCR_ev = [bid_FCR_ev; [(t-1)*4+1:t*4]' mat(1:4,:)];
-    bid_aFRRp_ev = [bid_aFRRp_ev; [(t-1)*4+1:t*4]' mat(5:8,:)];
-    bid_aFRRn_ev = [bid_aFRRn_ev; [(t-1)*4+1:t*4]' mat(9:12,:)];
+    bid_FCR_ev = [bid_FCR_ev; ((t-1)*4+1:t*4)' mat(1:4,:)];
+    bid_aFRRp_ev = [bid_aFRRp_ev; ((t-1)*4+1:t*4)' mat(5:8,:)];
+    bid_aFRRn_ev = [bid_aFRRn_ev; ((t-1)*4+1:t*4)' mat(9:12,:)];
 end
 Beq_4hour_bid_ev = zeros(height(Aeq_4hour_bid_ev),1);
-
-% temp.m = 0;
-% for m = 1:N.market    
-%     mat = zeros(24/4,lenN);
-%     for t = 1:24/4
-%         
-%         idx = find(ev.in <= 4*(t-1)+1);
-%         idx_check = find(ev.out(idx) > 4*(t-1)+1);
-%         if isempty(idx_check)
-%             continue;
-%         else
-%             idx = idx(find(ev.out(idx) > 4*(t-1)+1));
-%         end
-%         
-%         for i = 1:length(idx)
-%             vdx = idx(i);
-%             mat(i,temp.d)
-%         end
-%     
-%     end
-%     temp.m = temp.m + 
-% end
-
 
 %%% Back-up resource #######################################################################################
 % ESS = back-up resource??
@@ -281,94 +258,78 @@ A = [constA_VPP; constA_ESS; constA_EV];
 B = [constB_VPP; constB_ESS; constB_EV];
 Aeq=[Aeq_4hour_bid_ev]; Beq=[Beq_4hour_bid_ev];
 
+%% test
+A = []; B=[];
+Aeq = []; Beq = [];
+
 
 %% Optimization - objective functions
-% out time - 1 까지 스케줄링 수행
-f = zeros(lenN,1); % f: 목적함수
-%%% Objective: Profit function
-% ESS
-% for i = 1:ESS.num
-%     % ESS의 시장참여 수익함수. CPC 구간(1~U)은 수익함수가 적용되지 않고 "ones(U,5)*50"가 적용되어 최대한 시장참여를 회피함
-%     f((i-1)*M*T+1:i*M*T) = reshape([[repmat(ESS.P(i,1:5), U, 1); - market.C{ESS.REid(i)}(U+1:end,:).*ESS.P(i,1:5)] zeros(T, M-5)],T*M,1);
-% end
-% 
-% % EV
-% temp = 0;
-% % EV의 시장참여 수익함수. CPC 구간(1~U)은 수익함수가 적용되지 않고 "50"이 적용되어 최대한 시장참여를 회피함
-% for i = 1:EV.num
-%     if EV.in(i) > U % U < in time
-%         f(sumESS+temp+1:sumESS+temp+EV.dur(i)*5) = -reshape(market.C{EV.REid(i)}(EV.in(i):EV.out(i),:).*EV.P(i,1:5),EV.dur(i)*5,1);
-%     elseif EV.out(i) <= U % out time <= U
-%         mat = repmat(EV.P(i,1:5), EV.dur(i), 1);
-%         f(sumESS+temp+1:sumESS+temp+EV.dur(i)*5) = reshape(mat,1,EV.dur(i)*5)'*50;
-%     else % in time <= U <= out time
-%         mat = repmat(EV.P(i,1:5), U-EV.in(i)+1, 1);
-%         f(sumESS+temp+1:sumESS+temp+EV.dur(i)*5) = -reshape([mat*(-50); market.C{EV.REid(i)}(U+1:EV.out(i),:).*EV.P(i,1:5)],EV.dur(i)*5,1);
-%     end
-%     temp = temp + EV.dur(i)*M;
-% end
-% 
-% % 불필요한 충방전 억제
-% for i = 1:ESS.num
-%     f((i-1)*M*T+(M-2)*T+1 : (i-1)*M*T+(M-1)*T) = f((i-1)*M*T+(M-2)*T+1 : (i-1)*M*T+(M-1)*T) + penalty2;
-% end
-% dur = 0;
-% for i = 1:EV.num
-%     f(sumESS+dur+(M-2)*EV.dur(i)+1 : sumESS+dur+(M-1)*EV.dur(i)) = f(sumESS+dur+(M-2)*EV.dur(i)+1 : sumESS+dur+(M-1)*EV.dur(i)) + penalty2;
-%     dur = dur + EV.dur(i) * M;
-% end
-% 
-% 
-% % 자투리 spare
-% N_slack = sumESS + sumEV + EV.num + maxREid*T*2 + cbl*2;
-% % min(짜투리시간의 목표 SoC - 스케줄러의 최종 SoC)*에너지 비용
-% mat = [];
-% for i = 1:EV.num
-%     mat = [mat; market.SC(EV.out(i),EV.REid(i))];
-% end
-% f(N_slack+1:N_slack+EV.num) = mat;
-% 
-% idx = [];
-% for i = 1:ESS.num % intcon에서 SC_slack(maket 7번)을 제외
-%     idx = [idx (i-1)*T*M + 1: (i-1)*T*M + T*(M-1)];
-% end
-% dur = 0;
-% for i = 1:EV.num % intcon에서 SC_slack(maket 7번)을 제외
-%     idx = [idx sumESS+dur + 1: sumESS+dur+ EV.dur(i)*(M-1)];
-%     dur = dur + EV.dur(i)*M;
-% end
-% intcon = idx; % 결정 변수 중 지정된 변수는 integer 값만을 출력으로 냄
-% 
-% A = []; B = []; Aeq = []; Beq = [];
-% lb = zeros(N,1);
-% lb(sumESS+sumEV+1:sumESS+sumEV+EV.num) = EV.min; % EV init SoC_lower
-% lb(N_cbl+1:N_cbl+cbl*2) = -2; % cbl 제약을 위한 slack 목적함수의 최소값은 -2 까지만 허용됨
-% 
-% ub = ones(N,1);
-% ub(sumESS+sumEV+1:sumESS+sumEV+EV.num) = EV.max; % EV init SoC_upper
-% ub(sumESS+sumEV+EV.num+1:end) = inf; % cbl 제약을 위한 slack 목적함수
-% % SC_slack power upper and lower bound
-% for i = 1: ESS.num
-%     ub((i-1)*T*M + T*(M-1)+1 : (i-1)*T*M + T*M) = inf;
-%     lb((i-1)*T*M + T*(M-1)+1 : (i-1)*T*M + T*M) = -inf;
-% end
-% dur = 0;
-% for i = 1:EV.num
-%     ub(sumESS + dur + EV.dur(i)*(M-1)+1 : sumESS + dur + EV.dur(i)*M) = inf;
-%     lb(sumESS + dur + EV.dur(i)*(M-1)+1 : sumESS + dur + EV.dur(i)*M) = -inf;
-%     dur = dur+EV.dur(i)*M;
-% end
+%%% Objective: energy bid, 1~24
+bid_energy = zeros(24,lenN);
+% add ev
+temp.v = 0;
+for vdx = 1:N.ev
+    dur = ev.in(vdx):ev.out(vdx);
+    mat = eye(ev.duration(vdx));
+    dev = [mat.*abs(market.S_FCR(dur)).*market.E_FCR(dur) mat.*abs(market.S_aFRR_p(dur)).*market.E_aFRR_p(dur) mat.*market.S_aFRR_n(dur).*market.E_aFRR_n(dur) zeros(ev.duration(vdx))];
+    bid_energy(ev.in(vdx):ev.out(vdx), temp.v+1 : temp.v+ev.duration(vdx)*(N.market+N.sc)) = dev;
+    temp.v = temp.v + ev.duration(vdx)*(N.market+N.sc);
+end
 
-%%% Obejctive: S.C.의 비용은 RE 단위에서 계산 되어야함. 아래 목적함수는 RE 단위로 엮인 slack
-%%% 변수이고, 해당 변수에 S.C.의 충전비용이 곱해짐
-% "RE+TE출력 >= 0" 인 경우 역조류 충전 비용이 곱해짐 (negative)
-% f(sumESS+sumEV+EV.num+1 : sumESS+sumEV+EV.num+maxREid*T)             = reshape(market.SC(:,1:maxREid),T*maxREid,1);
-% % "RE+TE출력 < 0" 인 경우 억제를 위해 충전비용 x penalty배로 패널티를 부과함 (positive)
-% f(sumESS+sumEV+EV.num+maxREid*T+1 : sumESS+sumEV+EV.num+maxREid*T*2) = reshape(market.SC(:,1:maxREid),T*maxREid,1) * penalty;
+% add ess
+temp.v = N.uc_ev;
+for vdx = 1:N.ess
+    dur = 1:T;
+    mat = eye(ess.duration(vdx));
+    dev = [mat.*abs(market.S_FCR(dur)).*market.E_FCR(dur) mat.*abs(market.S_aFRR_p(dur)).*market.E_aFRR_p(dur) mat.*market.S_aFRR_n(dur).*market.E_aFRR_n(dur) zeros(ess.duration(vdx))];
+    bid_energy(:,temp.v+1 : temp.v+ess.duration(vdx)*(N.market+N.sc)) = dev;
+    temp.v = temp.v + ess.duration(vdx)*(N.market+N.sc);
+end
 
+%%% Objective: capacity bid, 1~24
+bid_capacity = zeros(24,lenN);
+temp.v = 0;
+for vdx = 1:N.ev
+    dur = ev.in(vdx):ev.out(vdx);
+    mat = eye(ev.duration(vdx));
+    dev = [mat.*market.C_FCR(dur) mat.*market.C_aFRR_p(dur) mat.*market.C_aFRR_n(dur) zeros(ev.duration(vdx))];
+    bid_capacity(ev.in(vdx):ev.out(vdx), temp.v+1 : temp.v+ev.duration(vdx)*(N.market+N.sc)) = dev;
+    temp.v = temp.v + ev.duration(vdx)*(N.market+N.sc);
+end
+
+% add ess
+temp.v = N.uc_ev;
+for vdx = 1:N.ess
+    dur = 1:T;
+    mat = eye(ess.duration(vdx));
+    dev = [mat.*market.C_FCR(dur) mat.*market.C_aFRR_p(dur) mat.*market.C_aFRR_n(dur) zeros(ess.duration(vdx))];
+    bid_capacity(:,temp.v+1 : temp.v+ess.duration(vdx)*(N.market+N.sc)) = dev;
+    temp.v = temp.v + ess.duration(vdx)*(N.market+N.sc);
+end
+
+%%% Objective: charging cost, 1~24
+cost_charge = zeros(24,lenN);
+temp.d = 0; temp.v = 0;
+for vdx = 1:N.ev
+    dur = ev.in(vdx):ev.out(vdx);
+    cost_charge(ev.in(vdx):ev.out(vdx), temp.v+ev.duration(vdx)*N.market+1 : temp.v+ev.duration(vdx)*(N.market+N.sc)) = eye(ev.duration(vdx)) .* market.sc(dur);
+    temp.v = temp.v + ev.duration(vdx)*(N.market+N.sc);
+end
+
+% add ess
+temp.v = N.uc_ev;
+for vdx = 1:N.ess
+    dur = 1:T;
+    cost_charge(:,temp.v+ess.duration(vdx)*N.market+1 : temp.v+ess.duration(vdx)*(N.market+N.sc)) = eye(ess.duration(vdx)).*market.sc(dur);
+    temp.v = temp.v + ess.duration(vdx)*(N.market+N.sc);
+end
+
+f = -sum(bid_capacity) - sum(bid_energy) + sum(cost_charge); % f: 목적함수
+f = zeros(lenN,1);
+f = sum(cost_charge);
 %% Solver: Mixed-integer Linear Programming
 options = optimoptions('intlinprog','Display','off');
 [x,fval,exitflag,output] = intlinprog(f,intcon,A,B,Aeq,Beq,lb,ub,[],options);
-save('Bid.mat','bid_FCR_ev','bid_aFRRp_ev','bid_aFRRn_ev');
+% save('Bid.mat','bid_FCR_ev','bid_aFRRp_ev','bid_aFRRn_ev');
 
 end

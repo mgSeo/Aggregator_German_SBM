@@ -51,21 +51,10 @@ soe = A_soc_ess*x + repelem(ess.initialSOC.*ess.capacity,ess.duration,1);
 for i = 1:N.ess
     mat = soe(1:ess.duration(i))/ess.capacity(i)*100;
     id = ['ess_id_',num2str(ess.id(i))];
-    SoC(:,i) = array2table(mat);
-    SoC.Properties.VariableNames{i} = id;
+    SoC(:,N.ev+i) = array2table(mat);
+    SoC.Properties.VariableNames{N.ev+i} = id;
     soe(1:ess.duration(i)) = [];
 end
-
-%% Bid
-load('Bid.mat')
-% result Bid
-Market_bid = {'FCR','aFRRp','aFRRn'};
-FCR = bid_FCR_ev(:,2:end)*x;
-aFRRp = bid_aFRRp_ev(:,2:end)*x;;
-aFRRn = bid_aFRRn_ev(:,2:end)*x;;
-Bid = table(FCR,aFRRp,aFRRn);
-
-
 
 %% UC-P
 R = table();
@@ -77,7 +66,7 @@ for i = 1:N.ev
     temp.d = 0;
     for r = 1:N.market + N.sc
         mat = zeros(24,1);
-        mat(ev.in(i):ev.out(i)) = x(temp.d+1 : temp.d+ev.duration(i));
+        mat(ev.in(i):ev.out(i)) = round(x(temp.d+1 : temp.d+ev.duration(i)));
         temp.d = temp.d + ev.duration(i);
 
         id = [Market{r},num2str(ev.id(i))];
@@ -92,7 +81,7 @@ Market = {'FCR_ess_id_', 'aFRRp_ess_id_', 'aFRRn_ess_id_', 'sc_ess_id_'};
 for i = 1:N.ess
     temp.d = 0;
     for r = 1:N.market + N.sc
-        mat = x(temp.d+1 : temp.d+ess.duration(i));
+        mat = round(x(temp.d+1 : temp.d+ess.duration(i)));
         temp.d = temp.d + ess.duration(i);
 
         id = [Market{r},num2str(ess.id(i))];
@@ -110,7 +99,7 @@ for i = 1:N.ev
     temp.d = 0;
     for r = 1:N.market + N.sc
         mat = zeros(24,1);
-        mat(ev.in(i):ev.out(i)) = x(temp.d+1 : temp.d+ev.duration(i));
+        mat(ev.in(i):ev.out(i)) = round(x(temp.d+1 : temp.d+ev.duration(i)));
         temp.d = temp.d + ev.duration(i);
 
         id = [Market{r},num2str(ev.id(i))];
@@ -125,7 +114,7 @@ Market = {'uc_FCR_ess_id_', 'uc_aFRRp_ess_id_', 'uc_aFRRn_ess_id_', 'uc_sc_ess_i
 for i = 1:N.ess
     temp.d = 0;
     for r = 1:N.market + N.sc
-        mat = x(temp.d+1 : temp.d+ess.duration(i));
+        mat = round(x(temp.d+1 : temp.d+ess.duration(i)));
         temp.d = temp.d + ess.duration(i);
         id = [Market{r},num2str(ess.id(i))];
         R(:,temp.i+r) = array2table(mat);
@@ -144,4 +133,22 @@ for i = 1:N.ev % table column sorting
         R = movevars(R, id_right, 'after', id_left);
     end
 end
+
+%% Bid
+%% Bid
+% load('Bid.mat')
+% result Bid
+bids = zeros(T,4);
+for m = 1:4
+    for vdx = 1:N.ev
+        bids(:,m) = bids(:,m) + R{:,(vdx-1)*8+m};
+    end
+end
+
+FCR = bids(:,1);
+aFRRp = bids(:,2);
+aFRRn = bids(:,3);
+sc = bids(:,4);
+Bid = table(FCR,aFRRp,aFRRn,sc);
+
 end
