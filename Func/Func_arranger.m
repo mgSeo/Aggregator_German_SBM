@@ -11,7 +11,7 @@ N.uc_ev = N.dur_ev * (N.market+N.sc);
 N.uc_ess = N.dur_ess * (N.market+N.sc);
 N.p_ev = N.dur_ev * (N.market+N.sc);
 N.p_ess = N.dur_ess * (N.market+N.sc);
-lenN = N.p_ev + N.p_ess + N.uc_ev + N.uc_ess + N.dur_ev + N.dur_ess;
+lenN = N.p_ev + N.p_ess + N.uc_ev + N.uc_ess;
 %%
 SoC = table();
 % soc-ev
