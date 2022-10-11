@@ -135,9 +135,6 @@ for i = 1:N.ev % table column sorting
 end
 
 %% Bid
-%% Bid
-% load('Bid.mat')
-% result Bid
 bids = zeros(T,4);
 for m = 1:4
     for vdx = 1:N.ev

@@ -18,7 +18,8 @@ lenN = N.p_ev + N.p_ess + N.uc_ev + N.uc_ess; % 필요한 결정 변수의 수�
 
 lb = zeros(lenN,1);
 ub = ones(lenN,1);
-ub(1 : N.p_ev+N.p_ess) = inf; % capacity bid
+ub(1 : N.p_ev) = repelem(ev.pcs,ev.duration*(N.market+N.sc),1); % capacity bid
+ub(N.p_ev+1 : N.p_ev+N.p_ess) = repelem(ess.pcs,ess.duration*(N.market+N.sc),1); % capacity bid
 intcon = 1:lenN;
 %% Constraints for market participation
 %%% UC
@@ -259,8 +260,8 @@ B = [constB_VPP; constB_ESS; constB_EV];
 Aeq=[Aeq_4hour_bid_ev]; Beq=[Beq_4hour_bid_ev];
 
 %% test
-A = [constA_EV]; B=[constB_EV];
-Aeq = []; Beq = [];
+% A = [constA_EV]; B=[constB_EV];
+% Aeq = []; Beq = [];
 
 
 %% Optimization - objective functions
@@ -324,14 +325,15 @@ for vdx = 1:N.ess
     temp.v = temp.v + ess.duration(vdx)*(N.market+N.sc);
 end
 
-% f = -sum(bid_capacity) - sum(bid_energy) + sum(cost_charge); % f: 목적함수
+f = -sum(bid_capacity) - sum(bid_energy) + sum(cost_charge); % f: 목적함수
 % f = zeros(lenN,1);
 % f = -ones(1,lenN);
 % f = sum(cost_charge);
-f = zeros(1,lenN);
+x0 = zeros(lenN,1);
+x0 = [];
 %% Solver: Mixed-integer Linear Programming
-options = optimoptions('intlinprog','Display','off');
-[x,fval,exitflag,output] = intlinprog(f,intcon,A,B,Aeq,Beq,lb,ub,[],options);
+options = optimoptions('intlinprog','MaxTime',300);%,'Display','off');
+[x,fval,exitflag,output] = intlinprog(f,intcon,A,B,Aeq,Beq,lb,ub,x0,options);
 % save('Bid.mat','bid_FCR_ev','bid_aFRRp_ev','bid_aFRRn_ev');
 
 end
