@@ -3,9 +3,13 @@ addpath('..\Func') % add 'Func' folder path
 addpath('..\Input') % add 'Input' folder path
 
 [market, ev, ess] = Func_pipeline(); % csv read
-% time_reduction % 48 hours => 12 slot
-[x, exitflag] = SBM_bid_model(market, ev, ess); % MILP scheduling algorithm
-[SoC, R, Bid] = Func_arranger(x,market,ev,ess);
+% ev.initialSOC = ev.goalSOC;
+% w = 1000;
+% market.C_FCR = market.C_FCR*w;
+% market.C_aFRR_p = market.C_aFRR_p*w;
+% market.C_aFRR_n = market.C_aFRR_n*w;
+[x, exitflag] = SBM_bid_model(market,  ev, ess); % MILP scheduling algorithm
+[SoC, R, Bid] = Func_arranger(x,market,ev, ess);
 % "UC": 성능 검증을 위한 알고리즘 결과
 % "Bid": 알고리즘이 도출한 최종 output
 % "VPP": TE 출력의 총합

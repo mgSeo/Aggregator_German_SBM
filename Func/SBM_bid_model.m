@@ -13,12 +13,13 @@ N.p_ev = N.dur_ev * (N.market+N.sc);
 N.p_ess = N.dur_ess * (N.market+N.sc);
 %     cbl = sum(ESS.num*(T-1)*(M-SC)) + sum(EV.dur-1)*(M-SC); % CBL 제약에 필요한 변수 수
 % N_cbl = sumESS + sumEV + EV.num + maxREid*T*2; % CBL 제약 적용을 용이하게 하기위한 간이 식
-lenN = N.p_ev + N.p_ess + N.uc_ev + N.uc_ess + N.dur_ev + N.dur_ess; % 필요한 결정 변수의 수를 미리 산정 후 코딩 (아래는 결정 변수 목록)
+lenN = N.p_ev + N.p_ess + N.uc_ev + N.uc_ess; % 필요한 결정 변수의 수를 미리 산정 후 코딩 (아래는 결정 변수 목록)
 % ev UC / ess UC / ev total duration / ess total duration / CBL 추가필요(start-up, shut-down)
 
 lb = zeros(lenN,1);
 ub = ones(lenN,1);
-ub(1 : N.p_ev+N.p_ess) = inf; % capacity bid
+ub(1 : N.p_ev) = repelem(ev.pcs,ev.duration*(N.market+N.sc),1); % capacity bid
+ub(N.p_ev+1 : N.p_ev+N.p_ess) = repelem(ess.pcs,ess.duration*(N.market+N.sc),1); % capacity bid
 intcon = 1:lenN;
 %% Constraints for market participation
 %%% UC
@@ -259,8 +260,8 @@ B = [constB_VPP; constB_ESS; constB_EV];
 Aeq=[Aeq_4hour_bid_ev]; Beq=[Beq_4hour_bid_ev];
 
 %% test
-A = []; B=[];
-Aeq = []; Beq = [];
+% A = [constA_EV]; B=[constB_EV];
+% Aeq = []; Beq = [];
 
 
 %% Optimization - objective functions
@@ -325,11 +326,14 @@ for vdx = 1:N.ess
 end
 
 f = -sum(bid_capacity) - sum(bid_energy) + sum(cost_charge); % f: 목적함수
-f = zeros(lenN,1);
-f = sum(cost_charge);
+% f = zeros(lenN,1);
+% f = -ones(1,lenN);
+% f = sum(cost_charge);
+x0 = zeros(lenN,1);
+x0 = [];
 %% Solver: Mixed-integer Linear Programming
-options = optimoptions('intlinprog','Display','off');
-[x,fval,exitflag,output] = intlinprog(f,intcon,A,B,Aeq,Beq,lb,ub,[],options);
+options = optimoptions('intlinprog','MaxTime',300);%,'Display','off');
+[x,fval,exitflag,output] = intlinprog(f,intcon,A,B,Aeq,Beq,lb,ub,x0,options);
 % save('Bid.mat','bid_FCR_ev','bid_aFRRp_ev','bid_aFRRn_ev');
 
 end
