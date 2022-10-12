@@ -141,57 +141,129 @@ def func(market, ev, ess, backup_rate):
                 p_front = p_behind
 
     # back-up resource slot
+    for m in range(N['market']):
+        for t in range(T):
+            backup_ess = 0
+            for vdx in range(len(ess)):
+                backup_ess += p_ess[vdx][m][t]
+            backup_ev = 0
+            for vdx in range(len(ev)):
+                if ev.arr[vdx] <= t <= ev.dep[vdx]:
+                    idx = t - ev.arr[vdx]
+                    backup_ev += p_ev[vdx][m][idx]
+            model.addConstr(backup_ess == backup_ev*backup_rate)
 
     ### objective function
     # energy bid
-    obj_E = 0
-    m = 0
+    obj_profit_E = 0    
     for m in range(N['market']):
         for vdx in range(len(ev)):
             for idx in range(ev.duration[vdx]):
                 t = ev.arr[vdx] + idx
-                obj_E += p_ev[vdx][m][idx] * market['S_'+pools[m]][t] * market['E_'+pools[m]][t]
+                obj_profit_E += p_ev[vdx][m][idx] * market['S_'+pools[m]][t] * market['E_'+pools[m]][t]    
+        for vdx in range(len(ess)):
+            for idx in range(ess.duration[vdx]):
+                t = ess.arr[vdx] + idx
+                obj_profit_E += p_ess[vdx][m][idx] * market['S_'+pools[m]][t] * market['E_'+pools[m]][t]
+
     # capacity bid
-    obj_C = 0
-    m = 0
+    obj_profit_C = 0
     for m in range(N['market']):
         for vdx in range(len(ev)):
             for idx in range(ev.duration[vdx]):
                 t = ev.arr[vdx] + idx
-                obj_E += p_ev[vdx][m][idx] * market['C_'+pools[m]][t]
+                obj_profit_C += p_ev[vdx][m][idx] * market['C_'+pools[m]][t]
+        for vdx in range(len(ess)):
+            for idx in range(ess.duration[vdx]):
+                t = ess.arr[vdx] + idx
+                obj_profit_C += p_ess[vdx][m][idx] * market['C_'+pools[m]][t]
 
     # charging cost
-    
+    obj_cost_charge = 0
+    m = N['market']
+    for vdx in range(len(ev)):
+        for idx in range(ev.duration[vdx]):
+            t = ev.arr[vdx] + idx
+            obj_cost_charge += p_ev[vdx][m][idx] * market['sc'][t]
+    for vdx in range(len(ess)):
+        for idx in range(ess.duration[vdx]):
+            t = ess.arr[vdx] + idx
+            obj_cost_charge += p_ess[vdx][m][idx] * market['sc'][t]
+
+    # goal soc
+    obj_slack_goalsoc = 0
+    for vdx in range(len(ev)): obj_slack_goalsoc += goalsoc_ev[vdx]
+    for vdx in range(len(ess)): obj_slack_goalsoc += goalsoc_ess[vdx]    
+
     model.ModelSense = GRB.MINIMIZE
-    model.setObjective(-obj_E)    
+    model.setObjective(-obj_profit_E - obj_profit_C + obj_cost_charge + obj_slack_goalsoc*9999)
     model.optimize()
     ###############################
-    # Power
-    header_p = [] 
+    ### header: power, uc
+    header_p = []
     header_uc = []
+    header_soc = []
     for vdx in range(len(ev)):
         for m in range(N['pool']):
-            header_p.append('p{}_'.format(vdx)+pools[m])
-            header_uc.append('uc{}_'.format(vdx)+pools[m])
-    # ev
-    Power_ev = pd.DataFrame(np.zeros([T,len(header_p)]),columns=header_p)
-    UC_ev = pd.DataFrame(np.zeros([T,len(header_uc)]),columns=header_uc)
+            header_p.append('evp{}_'.format(vdx)+pools[m])
+            header_uc.append('evuc{}_'.format(vdx)+pools[m])
+        header_soc.append('ev{}'.format(vdx))
+    for vdx in range(len(ess)):
+        for m in range(N['pool']):
+            header_p.append('essp{}_'.format(vdx)+pools[m])
+            header_uc.append('essuc{}_'.format(vdx)+pools[m])
+        header_soc.append('ess{}'.format(vdx))
+    # power & uc
+    Power = pd.DataFrame(np.zeros([T,len(header_p)]),columns=header_p)
+    UC = pd.DataFrame(np.zeros([T,len(header_uc)]),columns=header_uc)
+    SoC = pd.DataFrame(np.zeros([T+1,len(header_soc)]),columns=header_soc)
     for vdx in range(len(ev)):
         for m in range(N['pool']):
             for idx in range(ev.duration[vdx]):
                 t = ev.arr[vdx]+idx
-                Power_ev['p{}_'.format(vdx)+pools[m]][t] = p_ev[vdx][m][idx].x
-                UC_ev['uc{}_'.format(vdx)+pools[m]][t] = uc_ev[vdx][m][idx].x
-
-    # ess
-    Power_ess = pd.DataFrame(np.zeros([T,len(header_p)]),columns=header_p)
-    UC_ess = pd.DataFrame(np.zeros([T,len(header_uc)]),columns=header_uc)
+                Power['evp{}_'.format(vdx)+pools[m]][t] = p_ev[vdx][m][idx].x
+                UC['evuc{}_'.format(vdx)+pools[m]][t] = uc_ev[vdx][m][idx].x
     for vdx in range(len(ess)):
         for m in range(N['pool']):
             for idx in range(ess.duration[vdx]):
                 t = ess.arr[vdx]+idx
-                Power_ess['p{}_'.format(vdx)+pools[m]][t] = p_ess[vdx][m][idx].x
-                UC_ess['uc{}_'.format(vdx)+pools[m]][t] = uc_ess[vdx][m][idx].x
-                
+                Power['essp{}_'.format(vdx)+pools[m]][t] = p_ess[vdx][m][idx].x
+                UC['essuc{}_'.format(vdx)+pools[m]][t] = uc_ess[vdx][m][idx].x
+    # SoC
+    for vdx in range(len(ev)):
+        soc = ev.initialSOC[vdx]*ev.capacity[vdx]
+        SoC['ev{}'.format(vdx)][ev.arr[vdx]] = ev.initialSOC[vdx] * 100
+        for idx in range(ev.duration[vdx]):
+            t = ev.arr[vdx] + idx
+            for m in range(N['market']):
+                soc += p_ev[vdx][0][idx].x * market['S_'+pools[m]][t]
+            soc += p_ev[vdx][N['market']][idx].x
+            SoC['ev{}'.format(vdx)][t+1] = soc/ev.capacity[vdx]*100
 
-    return Power_ev, UC_ev, Power_ess, UC_ess
+    # soc: ess
+    for vdx in range(len(ess)):
+        soc = ess.initialSOC[vdx]*ess.capacity[vdx]
+        SoC['ess{}'.format(vdx)][ess.arr[vdx]] = ess.initialSOC[vdx] * 100
+        for idx in range(ess.duration[vdx]):
+            t = ess.arr[vdx] + idx
+            for m in range(N['market']):
+                soc += p_ess[vdx][0][idx].x * market['S_'+pools[m]][t]
+            soc += p_ess[vdx][N['market']][idx].x
+            SoC['ess{}'.format(vdx)][t+1] = soc/ess.capacity[vdx]*100        
+
+    ### header: bid
+    header_bid = []    
+    for m in range(N['pool']): header_bid.append('ev_'+pools[m])
+    for m in range(N['pool']): header_bid.append('ess_'+pools[m])
+    Bid = pd.DataFrame(np.zeros([T,len(header_bid)],))
+    # bid-ev
+    Bid = pd.DataFrame(np.zeros([T,len(header_bid)]),columns=header_bid)    
+    for vdx in range(len(ev)):
+        for m in range(N['pool']):
+            Bid['ev_'+pools[m]] += Power['evp{}_'.format(vdx)+pools[m]]
+    # bid-ess
+    for vdx in range(len(ess)):
+        for m in range(N['pool']):
+            Bid['ess_'+pools[m]] += Power['essp{}_'.format(vdx)+pools[m]]
+
+    return Power, UC, Bid, SoC

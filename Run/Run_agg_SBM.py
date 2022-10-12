@@ -11,9 +11,9 @@ market, ev, ess = Func_pipeline.func(market, resource)
 
 from Func import SBM_bid_model # SBM scheduling
 backup_rate = 0.2
-Power_ev, UC_ev, Power_ess, UC_ess = SBM_bid_model.func(market, ev, ess, backup_rate)
+power, uc, bid, soc = SBM_bid_model.func(market, ev, ess, backup_rate)
 
-Power_ev.to_csv('power_ev.csv',index=False)
-UC_ev.to_csv('uc_ev.csv',index=False)
-Power_ess.to_csv('power_ess.csv',index=False)
-UC_ess.to_csv('uc_ess.csv',index=False)
+power.to_csv('power.csv',index=False)
+uc.to_csv('uc.csv',index=False)
+bid.to_csv('bid.csv',index=False)
+soc.to_csv('soc.csv',index=False)
