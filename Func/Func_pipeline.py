@@ -1,4 +1,4 @@
-def func(market, resource):
+def func(market, resource, signal):
     # [%] -> [p.u.]    
     resource['initialSOC'] /= 100
     resource['goalSOC'] /= 100
@@ -25,5 +25,16 @@ def func(market, resource):
 
     T = 24; # 스케줄링의 총 슬롯 수
     ess['duration'] = T
+
+    # market unit, % -> p.u.
+    market['S_FCR'] /= 100
+    market['Sr_FCR'] /= 100
+    market['S_aFRR_p'] /= 100
+    market['S_aFRR_n'] /= 100
+
+    signal /= 100
+
+
+    
 
     return market, ev, ess
