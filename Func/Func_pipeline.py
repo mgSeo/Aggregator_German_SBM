@@ -9,8 +9,13 @@ def func(market, resource):
     ev  = resource[resource['type']==1]
     ess = resource[resource['type']==2]
 
-    # plug-time, now = 1 not 0    
-    ev['duration'] = ev.dep - ev.arr + 1
+    # plug-time, now = 1 not 0 
+    idx = ev[ev.dep<ev.arr].index.to_list()
+    ev['dep'][idx] += 24
+    idx = ev[ev.dep>23].index.to_list()
+    ev['dep'][idx] = 23
+    ev['duration'] = ev.dep - ev.arr + 1        
+    ev.drop(ev[ev['duration'] < 3].index, inplace=True)
 
     # EV goalSOC feasibility
     goalSOC_feasibility = ev.duration * ev.pcs - ev.capacity * (ev.goalSOC - ev.initialSOC)

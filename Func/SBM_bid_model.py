@@ -18,14 +18,14 @@ def func(market, ev, ess, backup_rate):
     # ev UC {vdx,m,t}
     uc_ev = [[model.addVars(range(ev.duration[vdx]), ub=1, lb=0, vtype = GRB.INTEGER) for m in range(N['pool'])] for vdx in range(len(ev))]
     # ev goal soc
-    goalsoc_ev = model.addVars(range(len(ev)), lb=0, vtype = GRB.INTEGER)
+    goalsoc_ev = model.addVars(range(len(ev)), lb=0)
 
     # ess Power {vdx,m,t}
     p_ess = [[model.addVars(range(ess.duration[vdx]), ub=ess.pcs[vdx], lb=0, vtype = GRB.INTEGER) for m in range(N['pool'])] for vdx in range(len(ess))]
     # ess UC {vdx,m,t}
     uc_ess = [[model.addVars(range(ess.duration[vdx]), ub=1, lb=0, vtype = GRB.INTEGER) for m in range(N['pool'])] for vdx in range(len(ess))]
     # ess goal soc
-    goalsoc_ess = model.addVars(range(len(ess)), lb=0, vtype = GRB.INTEGER)
+    goalsoc_ess = model.addVars(range(len(ess)), lb=0)
 
     ### Constraints:
     # uc: ev
